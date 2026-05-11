@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Papier Present · Conversal Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-light: #5FD1A4;
+    --green-dark: #0F2820;
+    --green-soft: rgba(29, 158, 117, 0.12);
+    --ink: #0F1B17;
+    --ink-2: #D4DDDA;
+    --ink-3: #8FA39D;
+    --ink-4: #5C6864;
+    --line: #2A3935;
+    --line-soft: #1F2C28;
+    --bg: #0A1411;
+    --panel: #131F1B;
+    --panel-2: #1A2823;
+    --red: #F08585;
+    --amber: #F5C361;
+    --blue: #6FAEEC;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg); color: var(--ink-2);
+    line-height: 1.5; font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  /* DEMO BANNER */
+  .demo-banner {
+    background: linear-gradient(90deg, rgba(245, 195, 97, 0.15), rgba(245, 195, 97, 0.05));
+    border-bottom: 1px solid rgba(245, 195, 97, 0.3);
+    padding: 10px 32px; font-size: 12px; color: var(--amber);
+    display: flex; align-items: center; gap: 10px; justify-content: center;
+    text-align: center;
+  }
+  .demo-banner strong { color: white; font-weight: 600; }
+
+  /* HEADER */
+  header {
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    padding: 18px 32px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 16px; color: white;
+  }
+  .logo::before {
+    content: ''; width: 22px; height: 22px;
+    background: var(--green); border-radius: 5px;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 65% 50%, 50% 35%, 35% 50%, 0% 50%);
+  }
+  .breadcrumb { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-3); }
+  .breadcrumb strong { color: white; font-weight: 600; }
+  .header-right { display: flex; gap: 16px; align-items: center; font-size: 13px; color: var(--ink-3); }
+  .pill-live {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: var(--green-soft); color: var(--green-light);
+    border-radius: 100px; font-size: 11px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pill-live::before {
+    content: ''; width: 6px; height: 6px; background: var(--green-light); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  /* TITLE BAR */
+  .titlebar {
+    padding: 28px 32px 24px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 32px; flex-wrap: wrap;
+  }
+  .titlebar h1 { font-size: 28px; font-weight: 700; color: white; letter-spacing: -0.02em; margin-bottom: 6px; }
+  .titlebar .subtitle { font-size: 13px; color: var(--ink-3); }
+  .period-select {
+    display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 4px;
+  }
+  .period-btn {
+    padding: 8px 14px; background: transparent; border: none; color: var(--ink-3);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    cursor: pointer; border-radius: 6px; transition: all 0.15s;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .period-btn:hover { color: white; }
+  .period-btn.active { background: var(--green); color: white; }
+
+  /* TABS */
+  .tabs {
+    padding: 0 32px; background: var(--panel); border-bottom: 1px solid var(--line);
+    display: flex; gap: 0; overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 20px; background: transparent; border: none; color: var(--ink-3);
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  }
+  .tab:hover { color: white; }
+  .tab.active { color: white; border-bottom-color: var(--green); }
+  .tab .count {
+    font-size: 10px; color: var(--ink-3); background: var(--line); padding: 2px 6px;
+    border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-weight: 500;
+  }
+  .tab.active .count { background: var(--green-soft); color: var(--green-light); }
+
+  /* MAIN */
+  main { padding: 32px; max-width: 1500px; margin: 0 auto; }
+  .panel-section { display: none; }
+  .panel-section.active { display: block; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; transition: all 0.2s;
+  }
+  .kpi:hover { border-color: var(--green); }
+  .kpi .label {
+    font-size: 11px; color: var(--ink-3); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;
+  }
+  .kpi .value { font-size: 28px; font-weight: 800; color: white; line-height: 1; letter-spacing: -0.02em; }
+  .kpi .value .unit { font-size: 14px; color: var(--ink-3); font-weight: 600; margin-left: 4px; }
+  .kpi .delta {
+    font-size: 11px; margin-top: 8px; font-family: 'JetBrains Mono', monospace;
+    font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 6px;
+  }
+  .delta.up { background: var(--green-soft); color: var(--green-light); }
+  .delta.down { background: rgba(240, 133, 133, 0.15); color: var(--red); }
+  .delta.flat { background: var(--line); color: var(--ink-3); }
+  .delta.up::before { content: '↑'; }
+  .delta.down::before { content: '↓'; }
+  .delta.flat::before { content: '≈'; }
+
+  /* PANEL GRID */
+  .panel-grid {
+    display: grid; gap: 14px; margin-bottom: 14px;
+  }
+  .panel-grid.cols-2 { grid-template-columns: 1.5fr 1fr; }
+  .panel-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .panel-grid.cols-12-5 { grid-template-columns: 1.2fr 1fr; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .panel-head h3 { font-size: 14px; font-weight: 700; color: white; }
+  .panel-head .subtitle { font-size: 11px; color: var(--ink-3); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+  .panel-head .badge {
+    background: var(--green-soft); color: var(--green-light); padding: 4px 10px;
+    border-radius: 6px; font-size: 10px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    text-align: left; padding: 10px 12px; color: var(--ink-3); font-weight: 500;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--line);
+  }
+  .data-table td { padding: 12px; border-bottom: 1px solid var(--line-soft); color: var(--ink-2); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table .num { font-family: 'JetBrains Mono', monospace; text-align: right; }
+  .data-table .col-name { color: white; font-weight: 500; }
+  .data-table .tag {
+    padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .tag-retail { background: rgba(111, 174, 236, 0.15); color: var(--blue); }
+  .tag-fashion { background: rgba(245, 195, 97, 0.15); color: var(--amber); }
+  .tag-food { background: rgba(240, 133, 133, 0.15); color: var(--red); }
+  .tag-events { background: var(--green-soft); color: var(--green-light); }
+  .tag-other { background: var(--line); color: var(--ink-3); }
+
+  /* POSITION INDICATOR */
+  .pos {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 11px;
+  }
+  .pos-up { color: var(--green-light); }
+  .pos-down { color: var(--red); }
+  .pos-flat { color: var(--ink-3); }
+
+  /* CHART CONTAINER */
+  .chart-container { position: relative; height: 280px; }
+  .chart-container.tall { height: 320px; }
+
+  /* SOURCE / DISCLAIMER */
+  .source-row {
+    margin-top: 24px; padding: 16px 20px;
+    background: var(--panel); border: 1px dashed var(--line); border-radius: 10px;
+    display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+    font-size: 11px; color: var(--ink-3); font-family: 'JetBrains Mono', monospace;
+  }
+  .source-row strong { color: white; font-weight: 600; }
+  .source-row .dot { color: var(--green); }
+
+  /* FUNNEL */
+  .funnel { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+  .funnel-step { display: grid; grid-template-columns: 110px 1fr 80px 70px; gap: 12px; align-items: center; font-size: 12px; }
+  .funnel-step .label { color: var(--ink-2); }
+  .funnel-step .bar { height: 10px; background: var(--line-soft); border-radius: 100px; overflow: hidden; }
+  .funnel-step .bar-fill { height: 100%; background: var(--green); border-radius: 100px; transition: width 0.3s; }
+  .funnel-step .count { font-family: 'JetBrains Mono', monospace; color: white; font-weight: 600; text-align: right; }
+  .funnel-step .pct { font-family: 'JetBrains Mono', monospace; color: var(--ink-3); text-align: right; font-size: 11px; }
+
+  /* CHANNELS PIE */
+  .channels-list { display: flex; flex-direction: column; gap: 14px; padding: 8px 0; }
+  .channel { display: grid; grid-template-columns: 14px 1fr 80px 60px; gap: 12px; align-items: center; }
+  .channel .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .channel .label { color: var(--ink-2); font-size: 12px; }
+  .channel .num { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: white; text-align: right; font-size: 12px; }
+  .channel .pct { font-family: 'JetBrains Mono', monospace; color: var(--ink-3); text-align: right; font-size: 11px; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--line); padding: 24px 32px;
+    text-align: center; font-size: 12px; color: var(--ink-3);
+    margin-top: 40px;
+  }
+  footer a { color: var(--green-light); text-decoration: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .panel-grid.cols-2, .panel-grid.cols-3, .panel-grid.cols-12-5 { grid-template-columns: 1fr; }
+    .titlebar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-banner">
+  ✦ <strong>Demo dashboard</strong> · alle data is illustratief, opgebouwd voor de pitch op 12 mei 2026. Het echte dashboard wordt opgebouwd vanaf maand 1 met live data uit GA4, GSC, Google Ads, Meta Ads en Leadinfo.
+</div>
+
+<header>
+  <div class="logo">conversal</div>
+  <div class="breadcrumb">
+    Klant <span>/</span> <strong>Papier Present BV</strong> <span>/</span> Intelligence Dashboard
+  </div>
+  <div class="header-right">
+    <span class="pill-live">Live</span>
+    <span>Laatste sync · vandaag 09:42</span>
+  </div>
+</header>
+
+<div class="titlebar">
+  <div>
+    <h1>Maandrapport · April 2026</h1>
+    <div class="subtitle">Steven De Wolf · Account lead · Conversal Intelligence</div>
+  </div>
+  <div class="period-select">
+    <button class="period-btn">7D</button>
+    <button class="period-btn">30D</button>
+    <button class="period-btn active">MTD</button>
+    <button class="period-btn">QTD</button>
+    <button class="period-btn">YTD</button>
+    <button class="period-btn">12M</button>
+  </div>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="overview">Overzicht</button>
+  <button class="tab" data-tab="seo">SEO <span class="count">43 kw</span></button>
+  <button class="tab" data-tab="ads">Ads <span class="count">€ 1.985</span></button>
+  <button class="tab" data-tab="leadinfo">Leadinfo <span class="count">128 bedrijven</span></button>
+  <button class="tab" data-tab="funnel">Funnel &amp; Content</button>
+</nav>
+
+<main>
+
+  <!-- TAB: OVERVIEW -->
+  <section class="panel-section active" id="panel-overview">
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="label">Leads totaal</div>
+        <div class="value">48</div>
+        <div class="delta up">+33% vs maart</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Cost per lead</div>
+        <div class="value">€ 41</div>
+        <div class="delta up">−12%</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Sessies (alle bronnen)</div>
+        <div class="value">3.842</div>
+        <div class="delta up">+18%</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Ad spend</div>
+        <div class="value">€ 1.985</div>
+        <div class="delta flat">≈ vs maart</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Offerteaanvragen</div>
+        <div class="value">17</div>
+        <div class="delta up">+6 stuks</div>
+      </div>
+    </div>
+
+    <div class="panel-grid cols-2">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Sessies per maand · 12 maanden</h3>
+            <div class="subtitle">organisch + paid + direct + referral</div>
+          </div>
+          <span class="badge">GA4</span>
+        </div>
+        <div class="chart-container"><canvas id="chart-sessions"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Verkeer per bron</h3>
+            <div class="subtitle">aandeel sessies april 2026</div>
+          </div>
+          <span class="badge">GA4</span>
+        </div>
+        <div class="channels-list" style="margin-top: 12px;">
+          <div class="channel"><div class="dot" style="background: var(--green);"></div><div class="label">Organic Search</div><div class="num">1.412</div><div class="pct">37%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--blue);"></div><div class="label">Paid Search</div><div class="num">892</div><div class="pct">23%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--amber);"></div><div class="label">Direct</div><div class="num">694</div><div class="pct">18%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--red);"></div><div class="label">Paid Social</div><div class="num">503</div><div class="pct">13%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--green-light);"></div><div class="label">Referral</div><div class="num">228</div><div class="pct">6%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--ink-4);"></div><div class="label">Email</div><div class="num">113</div><div class="pct">3%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-grid cols-2">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Top campagnes · CPL</h3>
+            <div class="subtitle">Google Ads + Meta Ads</div>
+          </div>
+          <span class="badge">Ads · GA4</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Campagne</th><th>Kanaal</th><th class="num">Spend</th><th class="num">Leads</th><th class="num">CPL</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">Branding · BMW &amp; Lab9 lookalike</td><td><span class="tag tag-fashion">Meta</span></td><td class="num">€ 612</td><td class="num">14</td><td class="num">€ 44</td></tr>
+            <tr><td class="col-name">Search · papieren tassen bedrukken</td><td><span class="tag tag-retail">Google</span></td><td class="num">€ 487</td><td class="num">11</td><td class="num">€ 44</td></tr>
+            <tr><td class="col-name">Performance Max · Webshop</td><td><span class="tag tag-retail">Google</span></td><td class="num">€ 410</td><td class="num">12</td><td class="num">€ 34</td></tr>
+            <tr><td class="col-name">Retargeting · Lookbook downloads</td><td><span class="tag tag-fashion">Meta</span></td><td class="num">€ 286</td><td class="num">8</td><td class="num">€ 36</td></tr>
+            <tr><td class="col-name">Search · custom verpakking B2B</td><td><span class="tag tag-retail">Google</span></td><td class="num">€ 190</td><td class="num">3</td><td class="num">€ 63</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Conversiefunnel · april</h3>
+            <div class="subtitle">van sessie tot klant</div>
+          </div>
+          <span class="badge">GA4 · CRM</span>
+        </div>
+        <div class="funnel">
+          <div class="funnel-step"><div class="label">Sessies</div><div class="bar"><div class="bar-fill" style="width: 100%;"></div></div><div class="count">3.842</div><div class="pct">100%</div></div>
+          <div class="funnel-step"><div class="label">Productpagina's</div><div class="bar"><div class="bar-fill" style="width: 47%;"></div></div><div class="count">1.808</div><div class="pct">47%</div></div>
+          <div class="funnel-step"><div class="label">Offerte gestart</div><div class="bar"><div class="bar-fill" style="width: 8.2%;"></div></div><div class="count">316</div><div class="pct">8,2%</div></div>
+          <div class="funnel-step"><div class="label">Aanvraag verzonden</div><div class="bar"><div class="bar-fill" style="width: 2.5%;"></div></div><div class="count">95</div><div class="pct">2,5%</div></div>
+          <div class="funnel-step"><div class="label">MQL (sales-validated)</div><div class="bar"><div class="bar-fill" style="width: 1.2%;"></div></div><div class="count">48</div><div class="pct">1,2%</div></div>
+          <div class="funnel-step"><div class="label">SQL (offerte uit)</div><div class="bar"><div class="bar-fill" style="width: 0.6%;"></div></div><div class="count">23</div><div class="pct">0,6%</div></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- TAB: SEO -->
+  <section class="panel-section" id="panel-seo">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Organisch verkeer</div><div class="value">1.412<span class="unit">/mnd</span></div><div class="delta up">+24%</div></div>
+      <div class="kpi"><div class="label">Rankende keywords</div><div class="value">87</div><div class="delta up">+44 (van 43)</div></div>
+      <div class="kpi"><div class="label">Top 10 posities</div><div class="value">19</div><div class="delta up">+12</div></div>
+      <div class="kpi"><div class="label">Backlinks</div><div class="value">3.412</div><div class="delta up">+66</div></div>
+      <div class="kpi"><div class="label">Page Authority</div><div class="value">19</div><div class="delta up">+2</div></div>
+    </div>
+
+    <div class="panel-grid cols-2">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Top keywords · positie-evolutie</h3>
+            <div class="subtitle">april vs maart · gemiddelde positie</div>
+          </div>
+          <span class="badge">Search Console</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Keyword</th><th class="num">Volume</th><th class="num">Maart</th><th class="num">April</th><th class="num">Δ</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">papier present</td><td class="num">480</td><td class="num">1</td><td class="num">1</td><td class="num"><span class="pos pos-flat">–</span></td></tr>
+            <tr><td class="col-name">bedrukte papieren tassen</td><td class="num">720</td><td class="num">42</td><td class="num">28</td><td class="num"><span class="pos pos-up">↑ 14</span></td></tr>
+            <tr><td class="col-name">luxe verpakking op maat</td><td class="num">320</td><td class="num">51</td><td class="num">35</td><td class="num"><span class="pos pos-up">↑ 16</span></td></tr>
+            <tr><td class="col-name">papieren draagtassen bedrukken</td><td class="num">390</td><td class="num">64</td><td class="num">41</td><td class="num"><span class="pos pos-up">↑ 23</span></td></tr>
+            <tr><td class="col-name">geschenkdoos op maat</td><td class="num">210</td><td class="num">38</td><td class="num">24</td><td class="num"><span class="pos pos-up">↑ 14</span></td></tr>
+            <tr><td class="col-name">katoenen tassen bedrukken</td><td class="num">140</td><td class="num">47</td><td class="num">31</td><td class="num"><span class="pos pos-up">↑ 16</span></td></tr>
+            <tr><td class="col-name">verzendverpakking bedrijven</td><td class="num">170</td><td class="num">22</td><td class="num">15</td><td class="num"><span class="pos pos-up">↑ 7</span></td></tr>
+            <tr><td class="col-name">tote bag bedrukken bedrijf</td><td class="num">110</td><td class="num">— </td><td class="num">42</td><td class="num"><span class="pos pos-up">new</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Organisch verkeer · 12 maanden</h3>
+            <div class="subtitle">trend en herstelcurve</div>
+          </div>
+          <span class="badge">GSC</span>
+        </div>
+        <div class="chart-container tall"><canvas id="chart-organic"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel-grid cols-2">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Top landingspagina's</h3><div class="subtitle">organisch · april</div></div>
+          <span class="badge">GA4 · GSC</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>URL</th><th class="num">Sessies</th><th class="num">Conv.</th><th class="num">Bounce</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">/nl_BE</td><td class="num">418</td><td class="num">11</td><td class="num">42%</td></tr>
+            <tr><td class="col-name">/shop/paper-bags-23x11x29hcm</td><td class="num">287</td><td class="num">8</td><td class="num">38%</td></tr>
+            <tr><td class="col-name">/nl/papieren-draagtassen</td><td class="num">156</td><td class="num">5</td><td class="num">45%</td></tr>
+            <tr><td class="col-name">/nl/luxe-geschenkdozen</td><td class="num">142</td><td class="num">4</td><td class="num">39%</td></tr>
+            <tr><td class="col-name">/shop/screen-print</td><td class="num">98</td><td class="num">2</td><td class="num">52%</td></tr>
+            <tr><td class="col-name">/blog/duurzame-verpakking-2026</td><td class="num">87</td><td class="num">1</td><td class="num">61%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>GEO · AI-vermeldingen</h3><div class="subtitle">ChatGPT, Perplexity, Gemini, Claude</div></div>
+          <span class="badge">GEO Monitor</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Prompt</th><th class="num">Vermeld</th><th class="num">Citaat</th><th class="num">Rank</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">"verpakking op maat retail België"</td><td class="num">4/4</td><td class="num">3/4</td><td class="num">#1-2</td></tr>
+            <tr><td class="col-name">"bedrukte draagtassen leverancier"</td><td class="num">3/4</td><td class="num">2/4</td><td class="num">#2</td></tr>
+            <tr><td class="col-name">"duurzame geschenkverpakking groothandel"</td><td class="num">2/4</td><td class="num">1/4</td><td class="num">#3-4</td></tr>
+            <tr><td class="col-name">"luxe shopper voor brands BE"</td><td class="num">3/4</td><td class="num">2/4</td><td class="num">#2</td></tr>
+            <tr><td class="col-name">"FSC papieren tassen op maat"</td><td class="num">2/4</td><td class="num">1/4</td><td class="num">#3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: ADS -->
+  <section class="panel-section" id="panel-ads">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Totaal spend</div><div class="value">€ 1.985</div><div class="delta flat">≈ vs maart</div></div>
+      <div class="kpi"><div class="label">Impressies</div><div class="value">142k</div><div class="delta up">+8%</div></div>
+      <div class="kpi"><div class="label">Klikken</div><div class="value">3.214</div><div class="delta up">+12%</div></div>
+      <div class="kpi"><div class="label">CTR</div><div class="value">2,26<span class="unit">%</span></div><div class="delta up">+0,2pt</div></div>
+      <div class="kpi"><div class="label">Avg. CPC</div><div class="value">€ 0,62</div><div class="delta up">−€ 0,08</div></div>
+    </div>
+
+    <div class="panel-grid cols-2">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Spend per kanaal · 6 maanden</h3><div class="subtitle">Google Ads + Meta Ads</div></div>
+          <span class="badge">Ads Manager</span>
+        </div>
+        <div class="chart-container"><canvas id="chart-adspend"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Ad fatigue per creative</h3><div class="subtitle">CTR-trend laatste 14 dagen</div></div>
+          <span class="badge">Meta</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Creative</th><th class="num">Vertoningen</th><th class="num">CTR start</th><th class="num">CTR nu</th><th class="num">Status</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">Lookbook reveal video</td><td class="num">28.4k</td><td class="num">3,1%</td><td class="num">2,8%</td><td class="num"><span class="tag tag-events">Fris</span></td></tr>
+            <tr><td class="col-name">Carrousel · 6 cases</td><td class="num">42.1k</td><td class="num">2,8%</td><td class="num">2,1%</td><td class="num"><span class="tag tag-fashion">Verzwakt</span></td></tr>
+            <tr><td class="col-name">Static · "Made in Merchtem"</td><td class="num">35.8k</td><td class="num">2,4%</td><td class="num">1,2%</td><td class="num"><span class="tag tag-food">Vermoeid</span></td></tr>
+            <tr><td class="col-name">Video · BMW case</td><td class="num">18.2k</td><td class="num">4,2%</td><td class="num">4,0%</td><td class="num"><span class="tag tag-events">Fris</span></td></tr>
+            <tr><td class="col-name">UGC compilatie · Q1</td><td class="num">22.7k</td><td class="num">2,1%</td><td class="num">0,8%</td><td class="num"><span class="tag tag-food">Vervangen</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div><h3>Top zoektermen · Google Ads</h3><div class="subtitle">april · gesorteerd op conversies</div></div>
+        <span class="badge">Google Ads</span>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Zoekterm</th><th class="num">Klikken</th><th class="num">Kost</th><th class="num">Conv.</th><th class="num">CPA</th><th class="num">Match-type</th></tr></thead>
+        <tbody>
+          <tr><td class="col-name">bedrukte papieren tassen bedrijf</td><td class="num">142</td><td class="num">€ 87</td><td class="num">6</td><td class="num">€ 14,50</td><td class="num">Exact</td></tr>
+          <tr><td class="col-name">papier present brussel</td><td class="num">98</td><td class="num">€ 36</td><td class="num">5</td><td class="num">€ 7,20</td><td class="num">Brand</td></tr>
+          <tr><td class="col-name">verpakking met logo bestellen</td><td class="num">87</td><td class="num">€ 64</td><td class="num">4</td><td class="num">€ 16,00</td><td class="num">Phrase</td></tr>
+          <tr><td class="col-name">draagtassen winkel bedrukken</td><td class="num">68</td><td class="num">€ 51</td><td class="num">3</td><td class="num">€ 17,00</td><td class="num">Phrase</td></tr>
+          <tr><td class="col-name">luxe geschenkdoos b2b</td><td class="num">54</td><td class="num">€ 49</td><td class="num">3</td><td class="num">€ 16,30</td><td class="num">Phrase</td></tr>
+          <tr><td class="col-name">tote bag groothandel belgië</td><td class="num">42</td><td class="num">€ 31</td><td class="num">2</td><td class="num">€ 15,50</td><td class="num">Broad</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TAB: LEADINFO -->
+  <section class="panel-section" id="panel-leadinfo">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Bedrijven geïdentificeerd</div><div class="value">128</div><div class="delta up">+22</div></div>
+      <div class="kpi"><div class="label">Nieuwe (vs vorige mnd)</div><div class="value">94</div><div class="delta up">+18</div></div>
+      <div class="kpi"><div class="label">Sales-relevant (B2B)</div><div class="value">76</div><div class="delta up">+12</div></div>
+      <div class="kpi"><div class="label">Sectoren</div><div class="value">11</div><div class="delta flat">≈</div></div>
+      <div class="kpi"><div class="label">Avg. tijd op site</div><div class="value">2:14</div><div class="delta up">+0:18</div></div>
+    </div>
+
+    <div class="panel-grid cols-12-5">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Top 12 bedrijven · april</h3><div class="subtitle">gesorteerd op sessies en intent-signalen</div></div>
+          <span class="badge">Leadinfo</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Bedrijf</th><th>Sector</th><th class="num">Sessies</th><th class="num">Pagina's</th><th class="num">Score</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">Veldeman Bedding</td><td><span class="tag tag-retail">Retail</span></td><td class="num">11</td><td class="num">38</td><td class="num">94</td></tr>
+            <tr><td class="col-name">Brantano</td><td><span class="tag tag-fashion">Fashion</span></td><td class="num">8</td><td class="num">29</td><td class="num">88</td></tr>
+            <tr><td class="col-name">Galler Chocolatier</td><td><span class="tag tag-food">Food</span></td><td class="num">7</td><td class="num">24</td><td class="num">86</td></tr>
+            <tr><td class="col-name">Mister Spex Belgium</td><td><span class="tag tag-retail">Retail</span></td><td class="num">6</td><td class="num">22</td><td class="num">81</td></tr>
+            <tr><td class="col-name">Standaard Boekhandel</td><td><span class="tag tag-retail">Retail</span></td><td class="num">5</td><td class="num">19</td><td class="num">78</td></tr>
+            <tr><td class="col-name">Cinoco</td><td><span class="tag tag-food">Food</span></td><td class="num">5</td><td class="num">16</td><td class="num">76</td></tr>
+            <tr><td class="col-name">Hunkemöller BE</td><td><span class="tag tag-fashion">Fashion</span></td><td class="num">4</td><td class="num">14</td><td class="num">72</td></tr>
+            <tr><td class="col-name">Tomorrowland Music</td><td><span class="tag tag-events">Events</span></td><td class="num">4</td><td class="num">12</td><td class="num">69</td></tr>
+            <tr><td class="col-name">Charlier Brothers</td><td><span class="tag tag-fashion">Fashion</span></td><td class="num">3</td><td class="num">11</td><td class="num">66</td></tr>
+            <tr><td class="col-name">Wijnhuis Delhaize Pro</td><td><span class="tag tag-retail">Retail</span></td><td class="num">3</td><td class="num">9</td><td class="num">63</td></tr>
+            <tr><td class="col-name">Belisol Pop-up</td><td><span class="tag tag-other">Other</span></td><td class="num">3</td><td class="num">8</td><td class="num">59</td></tr>
+            <tr><td class="col-name">Roularta Media</td><td><span class="tag tag-other">Other</span></td><td class="num">2</td><td class="num">7</td><td class="num">55</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>Verdeling per sector</h3><div class="subtitle">128 bedrijven</div></div></div>
+        <div class="channels-list" style="margin-top: 16px;">
+          <div class="channel"><div class="dot" style="background: var(--blue);"></div><div class="label">Retail</div><div class="num">42</div><div class="pct">33%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--amber);"></div><div class="label">Fashion</div><div class="num">28</div><div class="pct">22%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--red);"></div><div class="label">Food &amp; Beverage</div><div class="num">22</div><div class="pct">17%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--green-light);"></div><div class="label">Events</div><div class="num">14</div><div class="pct">11%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--green);"></div><div class="label">Media &amp; Pers</div><div class="num">8</div><div class="pct">6%</div></div>
+          <div class="channel"><div class="dot" style="background: var(--ink-4);"></div><div class="label">Andere</div><div class="num">14</div><div class="pct">11%</div></div>
+        </div>
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line-soft);">
+          <h3 style="font-size: 13px; color: white; margin-bottom: 12px;">Aanbevolen acties</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px; color: var(--ink-2);">
+            <div style="display: flex; gap: 10px;"><span style="color: var(--green);">→</span> 6 retail-bedrijven met 5+ sessies: koud LinkedIn-bericht via sales</div>
+            <div style="display: flex; gap: 10px;"><span style="color: var(--green);">→</span> Fashion-cluster groeit, opportuniteit voor nieuwe case-content</div>
+            <div style="display: flex; gap: 10px;"><span style="color: var(--green);">→</span> Tomorrowland Music: events-segment activeren voor zomer 2026</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: FUNNEL & CONTENT -->
+  <section class="panel-section" id="panel-funnel">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Lookbook downloads</div><div class="value">63</div><div class="delta up">+19</div></div>
+      <div class="kpi"><div class="label">Brochure-aanvragen</div><div class="value">41</div><div class="delta up">+11</div></div>
+      <div class="kpi"><div class="label">Contactformulier</div><div class="value">95</div><div class="delta up">+22</div></div>
+      <div class="kpi"><div class="label">Showroom-aanvragen</div><div class="value">12</div><div class="delta up">+3</div></div>
+      <div class="kpi"><div class="label">Conversie totaal</div><div class="value">5,5<span class="unit">%</span></div><div class="delta up">+0,9pt</div></div>
+    </div>
+
+    <div class="panel-grid cols-2">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Content performance · top 10</h3><div class="subtitle">gesorteerd op conversie-bijdrage</div></div>
+          <span class="badge">GA4</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Pagina</th><th class="num">Sessies</th><th class="num">Avg time</th><th class="num">Conv.</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">Lookbook 2026 download</td><td class="num">412</td><td class="num">4:12</td><td class="num">63</td></tr>
+            <tr><td class="col-name">Case · BMW custom shopper</td><td class="num">287</td><td class="num">3:48</td><td class="num">22</td></tr>
+            <tr><td class="col-name">Custom paper bag config tool</td><td class="num">241</td><td class="num">5:34</td><td class="num">19</td></tr>
+            <tr><td class="col-name">Duurzaamheid &amp; FSC pagina</td><td class="num">198</td><td class="num">2:51</td><td class="num">12</td></tr>
+            <tr><td class="col-name">Case · Lab9 retail setup</td><td class="num">156</td><td class="num">3:22</td><td class="num">11</td></tr>
+            <tr><td class="col-name">Brochure aanvragen formulier</td><td class="num">142</td><td class="num">1:48</td><td class="num">41</td></tr>
+            <tr><td class="col-name">Blog · Verpakkingstrends 2026</td><td class="num">128</td><td class="num">3:02</td><td class="num">6</td></tr>
+            <tr><td class="col-name">Showroom @Trade Mart</td><td class="num">94</td><td class="num">2:14</td><td class="num">12</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Lookbook downloads · 12 maanden</h3><div class="subtitle">incl. seizoenspieken</div></div>
+          <span class="badge">GA4</span>
+        </div>
+        <div class="chart-container tall"><canvas id="chart-lookbook"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div><h3>Lead-kwaliteit · MQL-status</h3><div class="subtitle">stand begin mei · gerapporteerd door sales</div></div>
+        <span class="badge">CRM</span>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Lead-bron</th><th class="num">Aanvragen</th><th class="num">Junk</th><th class="num">MQL</th><th class="num">SQL</th><th class="num">Quote uit</th><th class="num">Won</th></tr></thead>
+        <tbody>
+          <tr><td class="col-name">Google Ads · search</td><td class="num">22</td><td class="num">3</td><td class="num">19</td><td class="num">12</td><td class="num">7</td><td class="num">2</td></tr>
+          <tr><td class="col-name">Meta Ads · lookalike</td><td class="num">18</td><td class="num">5</td><td class="num">13</td><td class="num">6</td><td class="num">3</td><td class="num">1</td></tr>
+          <tr><td class="col-name">Organisch · NL category</td><td class="num">14</td><td class="num">2</td><td class="num">12</td><td class="num">9</td><td class="num">5</td><td class="num">2</td></tr>
+          <tr><td class="col-name">Direct &amp; referral</td><td class="num">19</td><td class="num">1</td><td class="num">18</td><td class="num">11</td><td class="num">6</td><td class="num">3</td></tr>
+          <tr><td class="col-name">Lookbook download</td><td class="num">22</td><td class="num">8</td><td class="num">14</td><td class="num">3</td><td class="num">2</td><td class="num">0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="source-row">
+    <div><span class="dot">●</span> <strong>Data sources:</strong> GA4 · Google Search Console · Google Ads · Meta Ads Manager · Leadinfo · HubSpot CRM</div>
+    <div><span class="dot">●</span> <strong>Refresh:</strong> dagelijks 06:00 CET</div>
+    <div><span class="dot">●</span> <strong>Methodology:</strong> Conversal Intelligence v1.2</div>
+  </div>
+
+</main>
+
+<footer>
+  Dit dashboard is een illustratieve mock-up gebouwd door Conversal voor de pitch met Papier Present op 12 mei 2026.<br>
+  Het echte dashboard wordt opgebouwd vanaf maand 1 van het Intelligence-traject. · <a href="mailto:steven@conversal.be">steven@conversal.be</a>
+</footer>
+
+<script>
+  // TAB SWITCHING
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel-section').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+    });
+  });
+  // PERIOD BUTTONS (just visual, no logic)
+  document.querySelectorAll('.period-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.period-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+
+  // CHART DEFAULTS for dark theme
+  Chart.defaults.color = '#8FA39D';
+  Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.borderColor = '#2A3935';
+
+  const months = ['mei 25', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec', 'jan 26', 'feb', 'mrt', 'apr'];
+
+  // SESSIONS CHART (OVERVIEW)
+  new Chart(document.getElementById('chart-sessions'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Organisch', data: [580, 530, 110, 165, 250, 370, 520, 650, 920, 1180, 1320, 1412], borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.15)', tension: 0.3, fill: true, borderWidth: 2.5, pointRadius: 3 },
+        { label: 'Paid', data: [610, 620, 590, 540, 480, 620, 760, 820, 730, 760, 880, 892], borderColor: '#6FAEEC', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2, pointRadius: 2 },
+        { label: 'Direct', data: [510, 520, 480, 460, 510, 540, 580, 620, 600, 650, 680, 694], borderColor: '#F5C361', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2, pointRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { size: 11 }, boxWidth: 14, color: '#D4DDDA' }, position: 'bottom' } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#1F2C28' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ORGANIC CHART (SEO tab)
+  new Chart(document.getElementById('chart-organic'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Organisch verkeer',
+        data: [580, 530, 110, 165, 250, 370, 520, 650, 920, 1180, 1320, 1412],
+        borderColor: '#5FD1A4', backgroundColor: 'rgba(95,209,164,0.15)',
+        tension: 0.35, fill: true, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#5FD1A4'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, grid: { color: '#1F2C28' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // AD SPEND CHART (Ads tab)
+  new Chart(document.getElementById('chart-adspend'), {
+    type: 'bar',
+    data: {
+      labels: ['nov 25', 'dec', 'jan 26', 'feb', 'mrt', 'apr'],
+      datasets: [
+        { label: 'Google Ads', data: [820, 1100, 940, 1010, 1080, 1145], backgroundColor: '#6FAEEC', borderRadius: 4 },
+        { label: 'Meta Ads', data: [380, 520, 660, 740, 820, 840], backgroundColor: '#F5C361', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#D4DDDA', boxWidth: 14 }, position: 'bottom' } },
+      scales: {
+        y: { stacked: true, beginAtZero: true, grid: { color: '#1F2C28' }, ticks: { callback: v => '€ ' + v } },
+        x: { stacked: true, grid: { display: false } }
+      }
+    }
+  });
+
+  // LOOKBOOK CHART (Funnel tab)
+  new Chart(document.getElementById('chart-lookbook'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Lookbook downloads',
+        data: [12, 14, 8, 18, 28, 42, 38, 31, 36, 47, 54, 63],
+        backgroundColor: '#1D9E75', borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, grid: { color: '#1F2C28' } }, x: { grid: { display: false } } }
+    }
+  });
+</script>
+
+</body>
+</html>
